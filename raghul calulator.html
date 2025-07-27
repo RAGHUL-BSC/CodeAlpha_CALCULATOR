@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modern Scientific Calculator</title>
+
+  <!-- Math.js (handles all the heavy math parsing and functions) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js" defer></script>
+
+  <style>
+    /* ---------- Dynamic background (pure‑CSS animated gradient) ---------- */
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* Four‑color diagonal gradient that slowly shifts positions */
+      background: linear-gradient(-45deg, #1e3c72, #2a5298, #753a88, #cc2b5e);
+      background-size: 400% 400%;
+      animation: gradientShift 16s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0%   50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0%   50%; }
+    }
+
+    /* ---------- Calculator container ---------- */
+    .calculator {
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 16px;
+      padding: 24px 20px 32px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+      width: 320px;
+    }
+
+    /* ---------- Display ---------- */
+    #display {
+      width: 100%;
+      height: 56px;
+      font-size: 1.55rem;
+      border: none;
+      border-radius: 8px;
+      background: #e9eef5;
+      text-align: right;
+      padding: 0 12px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+
+    /* ---------- Button grid ---------- */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .buttons button {
+      padding: 18px 0;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #2a5298;
+      color: #fff;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .buttons button:hover { background: #1e3c72; }
+
+    /* Distinct styling for command buttons */
+    .op      { background: #753a88; }
+    .op:hover{ background: #5b2d6b; }
+    .ctrl    { background: #cc2b5e; }
+    .ctrl:hover{ background: #a42049; }
+  </style>
+</head>
+<body>
+  <main class="calculator">
+    <input id="display" type="text" readonly />
+
+    <div class="buttons" id="buttons">
+      <!-- Row 1 -->
+      <button class="ctrl">C</button>
+      <button class="ctrl">DEL</button>
+      <button class="op">(</button>
+      <button class="op">)</button>
+
+      <!-- Row 2 -->
+      <button>7</button><button>8</button><button>9</button><button class="op">/</button>
+
+      <!-- Row 3 -->
+      <button>4</button><button>5</button><button>6</button><button class="op">*</button>
+
+      <!-- Row 4 -->
+      <button>1</button><button>2</button><button>3</button><button class="op">-</button>
+
+      <!-- Row 5 -->
+      <button>0</button><button>.</button><button class="op">+</button><button class="ctrl">=</button>
+
+      <!-- Row 6 — scientific ops -->
+      <button class="op">sin</button><button class="op">cos</button><button class="op">tan</button><button class="op">√</button>
+
+      <!-- Row 7 -->
+      <button class="op">log</button><button class="op">ln</button><button class="op">^</button><button class="op">!</button>
+    </div>
+  </main>
+
+  <script>
+    /* ---------- Calculator logic ---------- */
+    const display = document.getElementById("display");
+    const keypad  = document.getElementById("buttons");
+
+    keypad.addEventListener("click", e => {
+      if (!e.target.matches("button")) return;
+      const key = e.target.textContent.trim();
+
+      switch (key) {
+        case "=": // Evaluate expression
+          try {
+            display.value = math.evaluate(sanitize(display.value));
+          } catch {
+            display.value = "Error";
+          }
+          break;
+
+        case "C": // Clear display
+          display.value = "";
+          break;
+
+        case "DEL": // Delete last character
+          display.value = display.value.slice(0, -1);
+          break;
+
+        /* Functions that need a trailing "(" for math.js to parse */
+        case "sin": case "cos": case "tan":
+        case "log": case "ln": case "√":
+          display.value += (key === "√") ? "sqrt(" : key + "(";
+          break;
+
+        case "!": // Factorial
+          display.value += "!";
+          break;
+
+        default: // Append numbers, operators, etc.
+          display.value += key;
+      }
+    });
+
+    /* Replace the "ln" token with "log" base‑e, since math.js uses log(x, base) */
+    function sanitize(expr) {
+      return expr.replace(/ln\(/g, "log(");
+    }
+  </script>
+</body>
+</html>
